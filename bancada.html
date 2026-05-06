@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bancada Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#ff6b00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Oficina">
+    <style>
+        :root {
+            --bg: #0d0d0d; --surface: #161616; --surface2: #1f1f1f;
+            --border: #2a2a2a; --accent: #ff6b00; --accent2: #ffaa00;
+            --green: #00c97a; --red: #ff3b3b; --yellow: #ffc107;
+            --blue: #4db8ff; --purple: #b06bff;
+            --text: #e8e8e8; --muted: #666;
+            --mono: 'IBM Plex Mono', monospace;
+            --sans: 'IBM Plex Sans', sans-serif;
+            --display: 'Bebas Neue', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+        .banner-offline { display: none; background: #333; color: var(--yellow); font-family: var(--mono); font-size: 0.75em; text-align: center; padding: 6px; letter-spacing: 1px; }
+        .banner-offline.visivel { display: block; }
+        .banner-sync { display: none; background: rgba(0,201,122,0.15); color: var(--green); font-family: var(--mono); font-size: 0.75em; text-align: center; padding: 6px; letter-spacing: 1px; }
+        .banner-sync.visivel { display: block; }
+
+        header { background: var(--surface); border-bottom: 2px solid var(--accent); padding: 14px 20px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+        .logo-icon { width: 38px; height: 38px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .logo-text { font-family: var(--display); font-size: 1.5em; letter-spacing: 2px; color: var(--text); line-height: 1; }
+        .logo-sub { font-family: var(--mono); font-size: 0.6em; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+
+        .container { max-width: 640px; margin: 0 auto; padding: 16px 16px 80px; }
+
+        .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; position: relative; overflow: hidden; display: none; }
+        .form-card.aberto { display: block; }
+        .form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+        .form-title { font-family: var(--display); font-size: 1.3em; letter-spacing: 2px; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+        .form-title span { color: var(--accent); }
+        .btn-fechar-form { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1em; display: flex; align-items: center; justify-content: center; }
+
+        .field-group { margin-bottom: 12px; }
+        label.field-label { font-family: var(--mono); font-size: 0.68em; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="date"], textarea, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 0.95em; padding: 10px 14px; transition: border-color 0.2s; outline: none; }
+        input[type="text"]:focus, input[type="date"]:focus, textarea:focus, select:focus { border-color: var(--accent); background: #1a1a1a; }
+        textarea { height: 80px; resize: vertical; }
+        input::placeholder, textarea::placeholder { color: var(--muted); }
+        input[type="file"] { display: none; }
+        select option { background: var(--surface2); }
+
+        .tipo-grupo { display: flex; gap: 8px; }
+        .tipo-btn { flex: 1; padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--mono); font-size: 0.72em; letter-spacing: 1px; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .tipo-btn.ativo[data-tipo="garantia"] { background: rgba(0,201,122,0.15); border-color: var(--green); color: var(--green); }
+        .tipo-btn.ativo[data-tipo="interno"] { background: rgba(77,184,255,0.15); border-color: var(--blue); color: var(--blue); }
+        .tipo-btn.ativo[data-tipo="orcamento"] { background: rgba(176,107,255,0.15); border-color: var(--purple); color: var(--purple); }
+
+        .status-toggle { display: flex; align-items: center; gap: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; cursor: pointer; transition: all 0.2s; }
+        .status-toggle.concluido { border-color: var(--green); background: rgba(0,201,122,0.08); }
+        .toggle-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .status-toggle.concluido .toggle-circle { border-color: var(--green); background: var(--green); }
+        .toggle-label { font-family: var(--mono); font-size: 0.78em; letter-spacing: 1px; color: var(--muted); }
+        .status-toggle.concluido .toggle-label { color: var(--green); }
+
+        .camera-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--surface2); border: 1px dashed var(--border); border-radius: 8px; padding: 12px; cursor: pointer; font-size: 0.95em; color: var(--muted); width: 100%; font-family: var(--sans); transition: all 0.2s; }
+        .camera-btn:hover { border-color: var(--accent); color: var(--text); }
+
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-family: var(--display); font-size: 1.1em; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: var(--accent2); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-edit { background: var(--yellow); color: #000; flex: 1; }
+        .btn-delete { background: var(--red); color: white; flex: 1; }
+        .btn-concluir { background: rgba(0,201,122,0.15); color: var(--green); border: 1px solid var(--green) !important; flex: 1; }
+
+        .status-msg { font-family: var(--mono); font-size: 0.82em; text-align: center; margin-top: 10px; padding: 8px; border-radius: 6px; }
+        .status-ok { color: var(--green); background: rgba(0,201,122,0.08); }
+        .status-err { color: var(--red); background: rgba(255,59,59,0.08); }
+        .status-loading { color: var(--accent2); background: rgba(255,170,0,0.08); }
+        .status-offline { color: var(--yellow); background: rgba(255,193,7,0.08); }
+
+        .filtros-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+        .filtros-titulo { font-family: var(--mono); font-size: 0.7em; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px; }
+        .filtros-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .filtro-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--sans); font-size: 0.88em; padding: 8px 10px; outline: none; }
+        .filtro-input:focus { border-color: var(--accent); }
+        .filtros-tipo { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .filtro-tag { padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--mono); font-size: 0.68em; cursor: pointer; transition: all 0.2s; }
+        .filtro-tag.ativo { border-color: var(--accent); color: var(--accent); background: rgba(255,107,0,0.1); }
+        .filtro-tag[data-f="garantia"].ativo { border-color: var(--green); color: var(--green); background: rgba(0,201,122,0.1); }
+        .filtro-tag[data-f="interno"].ativo { border-color: var(--blue); color: var(--blue); background: rgba(77,184,255,0.1); }
+        .filtro-tag[data-f="orcamento"].ativo { border-color: var(--purple); color: var(--purple); background: rgba(176,107,255,0.1); }
+        .filtro-tag[data-f="concluido"].ativo { border-color: var(--green); color: var(--green); background: rgba(0,201,122,0.1); }
+        .filtro-tag[data-f="pendente"].ativo { border-color: var(--yellow); color: var(--yellow); background: rgba(255,193,7,0.1); }
+        .btn-limpar { background: none; border: none; color: var(--muted); font-family: var(--mono); font-size: 0.68em; cursor: pointer; margin-left: auto; letter-spacing: 1px; }
+        .btn-limpar:hover { color: var(--text); }
+
+        .list-header { font-family: var(--display); font-size: 1.2em; letter-spacing: 3px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .list-header .count { background: var(--accent); color: #000; font-size: 0.65em; padding: 2px 8px; border-radius: 20px; }
+
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; position: relative; animation: fadeUp 0.25s ease both; }
+        .card.concluido { border-color: rgba(0,201,122,0.25); }
+        .card.pendente-sync { border-color: rgba(255,193,7,0.3); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+        .card-id { font-family: var(--mono); font-size: 0.62em; color: var(--muted); }
+        .card-badges { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+        .badge { font-family: var(--mono); font-size: 0.62em; padding: 2px 8px; border-radius: 20px; border: 1px solid; }
+        .badge-data { border-color: var(--border); color: var(--muted); }
+        .badge-garantia { border-color: var(--green); color: var(--green); background: rgba(0,201,122,0.08); }
+        .badge-interno { border-color: var(--blue); color: var(--blue); background: rgba(77,184,255,0.08); }
+        .badge-orcamento { border-color: var(--purple); color: var(--purple); background: rgba(176,107,255,0.08); }
+        .badge-concluido { border-color: var(--green); color: var(--green); background: rgba(0,201,122,0.08); }
+        .badge-aberto { border-color: var(--yellow); color: var(--yellow); background: rgba(255,193,7,0.08); }
+        .badge-sync { border-color: var(--yellow); color: var(--yellow); }
+
+        .card-cliente { font-family: var(--display); font-size: 1.2em; letter-spacing: 1px; color: var(--text); margin-bottom: 5px; }
+        .card-row { display: flex; gap: 6px; margin-bottom: 3px; font-size: 0.86em; align-items: baseline; }
+        .card-key { font-family: var(--mono); color: var(--accent); font-size: 0.78em; letter-spacing: 1px; min-width: 75px; }
+        .card-val { color: #bbb; }
+        .card-obs { background: var(--surface2); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 7px 12px; font-size: 0.83em; color: var(--muted); font-style: italic; margin: 8px 0; line-height: 1.5; }
+        .card-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .card-actions .btn { padding: 8px; font-size: 0.88em; margin-top: 0; }
+
+        .galeria { display: grid; gap: 3px; margin: 8px 0; border-radius: 8px; overflow: hidden; height: 160px; }
+        .galeria.g1 { grid-template-columns: 1fr; }
+        .galeria.g2 { grid-template-columns: 1fr 1fr; }
+        .galeria.g3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .galeria.g3 .galeria-item:first-child { grid-row: 1 / 3; }
+        .galeria.g4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .galeria-item { overflow: hidden; cursor: pointer; position: relative; }
+        .galeria-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .fotos-grid { display: grid; gap: 4px; margin-top: 10px; border-radius: 8px; overflow: hidden; }
+        .fotos-grid.g1 { grid-template-columns: 1fr; height: 180px; }
+        .fotos-grid.g2 { grid-template-columns: 1fr 1fr; height: 120px; }
+        .fotos-grid.g3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 150px; }
+        .fotos-grid.g3 .foto-slot:first-child { grid-row: 1 / 3; }
+        .fotos-grid.g4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 150px; }
+        .foto-slot { position: relative; overflow: hidden; border-radius: 4px; }
+        .foto-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .foto-slot .foto-remover { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); border: none; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75em; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .foto-slot .foto-rabiscar { position: absolute; bottom: 4px; right: 4px; background: rgba(255,107,0,0.85); border: none; color: #000; width: 26px; height: 26px; border-radius: 50%; font-size: 0.8em; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        .lightbox.ativo { display: flex; }
+        .lightbox img { max-width: 100vw; max-height: 88vh; object-fit: contain; border-radius: 6px; }
+        .lightbox-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); border: none; color: white; font-size: 1.4em; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+
+        .editor-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 998; flex-direction: column; }
+        .editor-overlay.ativo { display: flex; }
+        .editor-toolbar { background: #111; padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #333; }
+        .editor-toolbar label { font-family: var(--mono); font-size: 0.68em; color: var(--accent); letter-spacing: 1px; }
+        .cor-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+        .cor-btn.ativo { border-color: white; }
+        .esp-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 3px 9px; cursor: pointer; font-size: 0.82em; }
+        .esp-btn.ativo { border-color: var(--accent); color: var(--accent); }
+        .editor-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        canvas#editorCanvas { touch-action: none; max-width: 100%; max-height: 100%; }
+        .editor-bottom { background: #111; padding: 10px 14px; display: flex; gap: 8px; border-top: 1px solid #333; }
+        .editor-bottom button { flex: 1; padding: 11px; border-radius: 8px; border: none; font-family: var(--display); font-size: 1em; letter-spacing: 1px; cursor: pointer; }
+        .btn-desfazer { background: var(--surface2); color: var(--text); }
+        .btn-confirmar { background: var(--accent); color: #000; }
+        .btn-cancelar-editor { background: var(--surface2); color: var(--muted); }
+
+        /* MODAL CHECKUP (usado pelo botão CONCLUIR nos cards) */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9998; align-items: center; justify-content: center; padding: 16px; }
+        .modal-overlay.ativo { display: flex; }
+        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; position: relative; }
+        .modal-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--green), var(--accent2)); border-radius: 14px 14px 0 0; }
+        .modal-header { padding: 18px 18px 10px; display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-family: var(--display); font-size: 1.2em; letter-spacing: 2px; color: var(--text); }
+        .modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 0.9em; }
+        .modal-tipo-sel { display: flex; gap: 8px; padding: 0 18px 14px; }
+        .modal-tipo-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--mono); font-size: 0.72em; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+        .modal-tipo-btn.ativo { border-color: var(--accent); color: var(--accent); background: rgba(255,107,0,0.1); }
+        .checklist-section { padding: 0 18px 10px; }
+        .checklist-label { font-family: var(--mono); font-size: 0.65em; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .check-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); margin-bottom: 6px; cursor: pointer; transition: all 0.15s; }
+        .check-item.checked { border-color: var(--green); background: rgba(0,201,122,0.08); }
+        .check-circle { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.7em; flex-shrink: 0; transition: all 0.15s; }
+        .check-item.checked .check-circle { border-color: var(--green); background: var(--green); color: #000; }
+        .check-text { font-family: var(--sans); font-size: 0.9em; color: var(--muted); }
+        .check-item.checked .check-text { color: var(--text); }
+        .modal-footer { padding: 14px 18px 18px; display: flex; gap: 8px; border-top: 1px solid var(--border); margin-top: 8px; }
+        .modal-footer button { flex: 1; padding: 11px; border-radius: 8px; border: none; font-family: var(--display); font-size: 1em; letter-spacing: 1px; cursor: pointer; }
+        .btn-modal-cancel { background: var(--surface2); color: var(--muted); }
+        .btn-modal-confirm { background: var(--green); color: #000; }
+        .checkup-progress { font-family: var(--mono); font-size: 0.7em; color: var(--muted); text-align: right; padding: 0 18px 8px; }
+
+        /* DIALOG INSPEÇÃO (usado no formulário) */
+        #modalInspecao {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0;
+            width: 92%;
+            max-width: 400px;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        #modalInspecao::backdrop {
+            background: rgba(0,0,0,0.88);
+        }
+        #modalInspecao h3 {
+            font-family: var(--display);
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid var(--border);
+            margin: 0;
+            color: var(--text);
+            position: relative;
+        }
+        #modalInspecao h3::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--green), var(--accent2));
+        }
+        #formChecklist { padding: 10px 16px 16px; }
+        .titulo-secao {
+            font-family: var(--mono);
+            font-size: 0.65em;
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: block;
+            margin: 14px 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+        .grupo { margin-bottom: 2px; }
+        .grupo label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--sans);
+            font-size: 0.9em;
+            color: var(--muted);
+        }
+        .grupo input[type="checkbox"] {
+            width: 17px; height: 17px;
+            accent-color: var(--green);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .grupo label:has(input:checked) {
+            border-color: var(--green);
+            background: rgba(0,201,122,0.07);
+            color: var(--text);
+        }
+        .btn-salvar-inspecao {
+            width: 100%; padding: 12px; margin-top: 14px;
+            background: var(--green); color: #000; border: none;
+            border-radius: 8px; font-family: var(--display);
+            font-size: 1.1em; letter-spacing: 2px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-salvar-inspecao:hover { filter: brightness(1.1); }
+
+        /* BOTÃO ABRIR CHECKLIST */
+        .btn-checklist {
+            width: 100%; padding: 12px; margin-top: 4px; margin-bottom: 8px;
+            background: var(--surface2); color: var(--accent);
+            border: 1px solid var(--accent); border-radius: 8px;
+            font-family: var(--display); font-size: 1.1em;
+            letter-spacing: 2px; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-checklist:hover { background: rgba(255,107,0,0.1); }
+
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 8px; height: 90px; margin-bottom: 12px; }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-family: var(--mono); font-size: 0.88em; }
+        .empty-state .icon { font-size: 2.2em; margin-bottom: 10px; display: block; }
+
+        .fab { position: fixed; bottom: 24px; right: 20px; width: 56px; height: 56px; background: var(--accent); border-radius: 50%; border: none; color: #000; font-size: 1.8em; cursor: pointer; box-shadow: 0 4px 20px rgba(255,107,0,0.4); z-index: 50; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .fab:hover { background: var(--accent2); transform: scale(1.05); }
+        .btn-whatsapp { background: rgba(77,184,255,0.12); color: var(--blue); border: 1px solid var(--blue) !important; flex: 1; }
+        .btn-whatsapp:hover { background: rgba(77,184,255,0.22); }
+
+        /* SHARE OVERLAY */
+        .share-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+        .share-overlay.ativo { display: flex; }
+        .share-img { max-width: 96vw; max-height: 80vh; border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.8); object-fit: contain; }
+        .share-actions { display: flex; gap: 10px; }
+        .btn-share-baixar { padding: 13px 28px; background: var(--accent); color: #000; border: none; border-radius: 10px; font-family: var(--display); font-size: 1.1em; letter-spacing: 2px; cursor: pointer; }
+        .btn-share-fechar { padding: 13px 20px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-family: var(--display); font-size: 1em; cursor: pointer; }
+        .share-hint { font-family: var(--mono); font-size: 0.72em; color: var(--muted); text-align: center; padding: 0 20px; }
+        .share-loading { color: var(--accent2); font-family: var(--mono); font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="banner-offline" id="bannerOffline">⚡ MODO OFFLINE — dados salvos localmente</div>
+<div class="banner-sync" id="bannerSync">✓ Conexão restaurada — sincronizando...</div>
+
+<header>
+    <div class="logo-icon">🔧</div>
+    <div>
+        <div class="logo-text">Bancada Pro</div>
+        <div class="logo-sub">Ordens</div>
+    </div>
+</header>
+
+<!-- EDITOR RABISCO -->
+<div class="editor-overlay" id="editorOverlay">
+    <div class="editor-toolbar">
+        <label>COR:</label>
+        <div class="cor-btn ativo" style="background:#ff3b3b" data-cor="#ff3b3b" onclick="selecionarCor(this)"></div>
+        <div class="cor-btn" style="background:#ffaa00" data-cor="#ffaa00" onclick="selecionarCor(this)"></div>
+        <div class="cor-btn" style="background:#00c97a" data-cor="#00c97a" onclick="selecionarCor(this)"></div>
+        <div class="cor-btn" style="background:#4db8ff" data-cor="#4db8ff" onclick="selecionarCor(this)"></div>
+        <div class="cor-btn" style="background:#fff" data-cor="#ffffff" onclick="selecionarCor(this)"></div>
+        <div class="cor-btn" style="background:#000;border-color:#555" data-cor="#000000" onclick="selecionarCor(this)"></div>
+        <label style="margin-left:4px">ESP:</label>
+        <button class="esp-btn" data-esp="3" onclick="selecionarEsp(this)">P</button>
+        <button class="esp-btn ativo" data-esp="6" onclick="selecionarEsp(this)">M</button>
+        <button class="esp-btn" data-esp="12" onclick="selecionarEsp(this)">G</button>
+    </div>
+    <div class="editor-canvas-wrap"><canvas id="editorCanvas"></canvas></div>
+    <div class="editor-bottom">
+        <button class="btn-cancelar-editor" onclick="cancelarEditor()">CANCELAR</button>
+        <button class="btn-desfazer" onclick="desfazer()">↩ DESFAZER</button>
+        <button class="btn-confirmar" onclick="confirmarEditor()">✓ OK</button>
+    </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="fecharLightbox()">
+    <button class="lightbox-close" onclick="fecharLightbox()">✕</button>
+    <img id="lightboxImg" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:16px;margin-top:12px;" onclick="event.stopPropagation()">
+        <button id="lightboxPrev" onclick="lightboxNav(-1)" style="display:none;background:rgba(255,255,255,0.1);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:1.2em;cursor:pointer;align-items:center;justify-content:center;">‹</button>
+        <span id="lightboxCounter" style="font-family:var(--mono);font-size:0.75em;color:var(--muted);"></span>
+        <button id="lightboxNext" onclick="lightboxNav(1)" style="display:none;background:rgba(255,255,255,0.1);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:1.2em;cursor:pointer;align-items:center;justify-content:center;">›</button>
+    </div>
+</div>
+
+<!-- MODAL CHECKUP (botão CONCLUIR nos cards) -->
+<div class="modal-overlay" id="modalCheckup">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title">✓ CHECKUP ANTES DE CONCLUIR</div>
+            <button class="modal-close" onclick="fecharCheckup()">✕</button>
+        </div>
+        <div class="modal-tipo-sel">
+            <button class="modal-tipo-btn ativo" data-aparelho="hoverboard" onclick="selecionarCheckupTipo(this)">🛹 HOVERBOARD</button>
+            <button class="modal-tipo-btn" data-aparelho="triciclo" onclick="selecionarCheckupTipo(this)">🛵 TRICICLO</button>
+        </div>
+        <div class="checkup-progress" id="checkupProgress">0 / 0 itens</div>
+        <div class="checklist-section" id="checklistWrap"></div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="fecharCheckup()">CANCELAR</button>
+            <button class="btn-modal-confirm" id="btnConfirmarCheckup" onclick="confirmarCheckup()" disabled style="opacity:0.4;cursor:not-allowed">✓ CONCLUIR</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="form-card" id="formCard">
+        <div class="form-title">
+            <div><span id="formTitleIcon">▮</span> <span id="formTitleText">Nova Ordem</span></div>
+            <button class="btn-fechar-form" onclick="fecharForm()">✕</button>
+        </div>
+        <input type="hidden" id="editId">
+
+        <div class="field-group">
+            <label class="field-label">Cliente</label>
+            <input type="text" id="cliente" placeholder="">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Brinquedo</label>
+            <input type="text" id="aparelho" placeholder="">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Tipo de Serviço</label>
+            <div class="tipo-grupo">
+                <button class="tipo-btn" data-tipo="garantia" onclick="selecionarTipo(this)">🛡 GARANTIA</button>
+                <button class="tipo-btn ativo" data-tipo="interno" onclick="selecionarTipo(this)">🔧 INTERNO</button>
+                <button class="tipo-btn" data-tipo="orcamento" onclick="selecionarTipo(this)">💰 ORÇAMENTO</button>
+            </div>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Defeito Relatado</label>
+            <input type="text" id="defeito" placeholder="">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Observações Técnicas</label>
+            <textarea id="obs" placeholder="Relato técnico e peças utilizadas..."></textarea>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Data</label>
+            <input type="date" id="dataInput">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Status</label>
+            <div class="status-toggle" id="statusToggle" onclick="toggleConcluido()">
+                <div class="toggle-circle" id="toggleCircle">✓</div>
+                <span class="toggle-label" id="toggleLabel">PENDENTE — toque para marcar como concluído</span>
+            </div>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Foto</label>
+            <input type="file" id="fotoInputCamera" accept="image/*" capture="environment" onchange="fotoSelecionada(this)">
+            <input type="file" id="fotoInputGaleria" accept="image/*" multiple onchange="fotoSelecionada(this)">
+            <div style="display:flex;gap:8px;margin-bottom:4px;">
+                <button class="camera-btn" style="flex:1" onclick="document.getElementById('fotoInputCamera').click()">
+                    <span style="font-size:1.2em">📷</span> Tirar Foto
+                </button>
+                <button class="camera-btn" style="flex:1" onclick="document.getElementById('fotoInputGaleria').click()">
+                    <span style="font-size:1.2em">🖼</span> Carregar
+                </button>
+            </div>
+            <div id="fotosGridWrap"></div>
+        </div>
+
+        <!-- BOTÃO CHECKLIST -->
+        <button type="button" class="btn-checklist" onclick="document.getElementById('modalInspecao').showModal()">
+            📋 CHECKLIST DE INSPEÇÃO
+        </button>
+        <div id="checklistHint" style="font-family:var(--mono);font-size:0.7em;color:var(--muted);text-align:center;margin:-4px 0 6px;"></div>
+
+        <!-- DIALOG INSPEÇÃO -->
+        <dialog id="modalInspecao">
+            <h3>📋 Inspeção Técnica</h3>
+            <form id="formChecklist">
+                <div class="grupo">
+                    <div class="titulo-secao">TESTES DE RODAGEM</div>
+                    <label><input type="checkbox" class="item-check" id="equi"> EQUILÍBRIO</label>
+                    <label><input type="checkbox" class="item-check" id="ace"> ACELERAÇÃO</label>
+                    <label><input type="checkbox" class="item-check" id="fre"> FREIO</label>
+                    <label><input type="checkbox" class="item-check" id="bar"> BARULHOS</label>
+                </div>
+                <div class="grupo">
+                    <div class="titulo-secao">SISTEMA DE LUZES</div>
+                    <label><input type="checkbox" class="item-check" id="lf"> LUZ FRONTAL</label>
+                    <label><input type="checkbox" class="item-check" id="lr"> LUZ DA RODA</label>
+                    <label><input type="checkbox" class="item-check" id="lla"> LUZ LATERAL</label>
+                    <label><input type="checkbox" class="item-check" id="lc"> LUZ DE CIMA</label>
+                </div>
+                <div class="grupo">
+                    <div class="titulo-secao">ENERGIA / BATERIA</div>
+                    <label><input type="checkbox" class="item-check" id="bl"> BATERIA LIGA</label>
+                    <label><input type="checkbox" class="item-check" id="bc"> CARREGA</label>
+                    <label><input type="checkbox" class="item-check" id="bs"> SEGURA CARGA</label>
+                    <label><input type="checkbox" class="item-check" id="con100"> CONECTORES 100%</label>
+                    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:5px;">
+                        <input type="checkbox" class="item-check" id="mod" style="width:17px;height:17px;accent-color:var(--green);flex-shrink:0;">
+                        <label for="mod" style="color:var(--muted);font-size:0.9em;cursor:pointer;flex:0 0 auto;padding:0;border:none;background:none;margin:0;">MÓDULO</label>
+                        <input type="text" id="modPotencia" placeholder="ex: 350w" style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:2px 6px;color:var(--text);font-size:0.85em;outline:none;font-family:var(--mono);">
+                    </div>
+                </div>
+                <div class="grupo">
+                    <div class="titulo-secao">MULTIMÍDIA</div>
+                    <label><input type="checkbox" class="item-check" id="bt"> BLUETOOTH</label>
+                    <label><input type="checkbox" class="item-check" id="som"> SOM</label>
+                    <label><input type="checkbox" class="item-check" id="buz"> BUZINA</label>
+                </div>
+                <button type="button" class="btn-salvar-inspecao" onclick="validarChecklist()">✓ SALVAR INSPEÇÃO</button>
+            </form>
+        </dialog>
+
+        <button class="btn btn-primary" id="btnAcao" onclick="enviar()">SALVAR ORDEM</button>
+        <div id="status"></div>
+    </div>
+
+    <div class="filtros-card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <div class="filtros-titulo">🔍 FILTRAR</div>
+            <button class="btn-limpar" onclick="limparFiltros()">LIMPAR</button>
+        </div>
+        <div class="filtros-grid">
+            <input class="filtro-input" id="filtroCliente" placeholder="Cliente..." oninput="aplicarFiltros()">
+            <input class="filtro-input" id="filtroBrinquedo" placeholder="Brinquedo..." oninput="aplicarFiltros()">
+            <input class="filtro-input" id="filtroId" placeholder="Nº OS..." oninput="aplicarFiltros()">
+            <input class="filtro-input" type="date" id="filtroData" oninput="aplicarFiltros()">
+        </div>
+        <div class="filtros-tipo">
+            <span class="filtro-tag" data-f="garantia" onclick="toggleFiltroTag(this)">🛡 GARANTIA</span>
+            <span class="filtro-tag" data-f="interno" onclick="toggleFiltroTag(this)">🔧 INTERNO</span>
+            <span class="filtro-tag" data-f="orcamento" onclick="toggleFiltroTag(this)">💰 ORÇAMENTO</span>
+            <span class="filtro-tag" data-f="concluido" onclick="toggleFiltroTag(this)">✓ CONCLUÍDO</span>
+            <span class="filtro-tag" data-f="pendente" onclick="toggleFiltroTag(this)">⏳ PENDENTE</span>
+        </div>
+    </div>
+
+    <div class="list-header">ORDENS <span class="count" id="countBadge">...</span></div>
+    <div id="lista"></div>
+</div>
+
+<!-- SHARE OVERLAY -->
+<div class="share-overlay" id="shareOverlay" onclick="fecharShare()">
+    <div class="share-loading" id="shareLoading">⏳ Gerando imagem...</div>
+    <img class="share-img" id="shareImg" style="display:none" onclick="event.stopPropagation()">
+    <div class="share-actions" id="shareActions" style="display:none" onclick="event.stopPropagation()">
+        <button class="btn-share-baixar" onclick="baixarImg()">⬇ SALVAR</button>
+        <button class="btn-share-fechar" onclick="fecharShare()">✕</button>
+    </div>
+    <div class="share-hint" id="shareHint"></div>
+</div>
+
+<button class="fab" onclick="abrirForm()" id="fab">+</button>
+
+<script>
+const URL_API = "https://script.google.com/macros/s/AKfycbwnoy8DOyzolmt6vX-WxfhdSWNVR1sTDoEsunDW1nsuiBcW_QMimn5juprLPpgBhiGTcw/exec";
+const DB_KEY = 'bancada_ordens';
+const FILA_KEY = 'bancada_fila_sync';
+
+let imagemBase64 = "";
+let imagemMime = "image/jpeg";
+let imagemNome = "foto.jpg";
+let tipoSelecionado = "interno";
+let isConcluido = false;
+let todosOsDados = [];
+
+function isOnline() { return navigator.onLine; }
+function atualizarBannerConexao() {
+    document.getElementById('bannerOffline').classList.toggle('visivel', !isOnline());
+}
+window.addEventListener('online', () => {
+    document.getElementById('bannerOffline').classList.remove('visivel');
+    document.getElementById('bannerSync').classList.add('visivel');
+    sincronizarFila();
+    setTimeout(() => document.getElementById('bannerSync').classList.remove('visivel'), 3000);
+});
+window.addEventListener('offline', atualizarBannerConexao);
+
+function carregarLocal() { try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); } catch { return []; } }
+function salvarLocal(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); }
+function carregarFila() { try { return JSON.parse(localStorage.getItem(FILA_KEY) || '[]'); } catch { return []; } }
+function salvarFila(f) { localStorage.setItem(FILA_KEY, JSON.stringify(f)); }
+function adicionarFila(item) { const f = carregarFila(); f.push(item); salvarFila(f); }
+
+async function sincronizarFila() {
+    if (!isOnline()) return;
+    const fila = carregarFila();
+    if (!fila.length) return;
+    const novaFila = [];
+    for (const item of fila) {
+        try {
+            const res = await fetch(URL_API, {
+                method: 'POST',
+                body: JSON.stringify({
+                    acao: item.acao, id: item.id || '', cliente: item.cliente || '',
+                    aparelho: item.aparelho || '', defeito: item.defeito || '',
+                    obs: item.obs || '', foto: item.foto || '',
+                    foto2: item.foto2 || '', foto3: item.foto3 || '', foto4: item.foto4 || '',
+                    tipo: item.tipo || '', concluido: item.concluido || 'false',
+                    data: item.data || '', num: item.num || ''
+                })
+            });
+            const d = await res.json();
+            if (d.ok) {
+                const dados = carregarLocal();
+                const idx = dados.findIndex(x => x.id === item.id);
+                if (idx !== -1) { dados[idx].pendente = false; salvarLocal(dados); }
+            } else novaFila.push(item);
+        } catch { novaFila.push(item); }
+    }
+    salvarFila(novaFila);
+    listar();
+}
+
+function abrirForm() {
+    document.getElementById('formCard').classList.add('aberto');
+    document.getElementById('fab').style.display = 'none';
+    const hoje = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('dataInput').value) document.getElementById('dataInput').value = hoje;
+    atualizarEstadoBotaoSalvar();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function fecharForm() {
+    document.getElementById('formCard').classList.remove('aberto');
+    document.getElementById('fab').style.display = 'flex';
+    limparForm();
+    listar(); // atualiza a lista sem recarregar a página
+}
+
+function selecionarTipo(el) {
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('ativo'));
+    el.classList.add('ativo');
+    tipoSelecionado = el.dataset.tipo;
+}
+
+function toggleConcluido() {
+    isConcluido = !isConcluido;
+    const toggle = document.getElementById('statusToggle');
+    const label = document.getElementById('toggleLabel');
+    toggle.classList.toggle('concluido', isConcluido);
+    label.textContent = isConcluido ? 'CONCLUÍDO ✓' : 'PENDENTE — toque para marcar como concluído';
+    atualizarEstadoBotaoSalvar();
+}
+
+function atualizarEstadoBotaoSalvar() {
+    const btn = document.getElementById('btnAcao');
+    const hint = document.getElementById('checklistHint');
+    if (!isConcluido) {
+        // Pendente: libera salvar direto
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        if (hint) hint.textContent = '💡 Status pendente — checklist opcional';
+    } else {
+        // Concluído: só libera se checklist completo
+        const total = document.querySelectorAll('.item-check').length;
+        const marcados = document.querySelectorAll('.item-check:checked').length;
+        const completo = marcados === total;
+        if (btn) { btn.disabled = !completo; btn.style.opacity = completo ? '' : '0.5'; }
+        if (hint) hint.textContent = completo ? '✓ Checklist completo!' : '⚠️ Status concluído exige checklist completo';
+    }
+}
+
+let fotosArr = [];
+
+// fotosArr = fotos originais alta qualidade (para card/share)
+// fotosArrSmall = fotos comprimidas (para upload nuvem)
+let fotosArrSmall = [];
+
+function fotoSelecionada(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    const restantes = 4 - fotosArr.length;
+    const paraProcessar = files.slice(0, restantes);
+    let processados = 0;
+    paraProcessar.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgEl = new Image();
+            imgEl.onload = function() {
+                // Versão ORIGINAL — só limita em 1600px para não estourar memória
+                const MAX_ORIG = 1600;
+                let w = imgEl.width, h = imgEl.height;
+                if (w > h && w > MAX_ORIG) { h = Math.round(h * MAX_ORIG / w); w = MAX_ORIG; }
+                else if (h >= w && h > MAX_ORIG) { w = Math.round(w * MAX_ORIG / h); h = MAX_ORIG; }
+                const cOrig = document.createElement('canvas');
+                cOrig.width = w; cOrig.height = h;
+                cOrig.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+                fotosArr.push(cOrig.toDataURL('image/jpeg', 0.92)); // alta qualidade
+
+                // Versão PEQUENA para upload (600px, 55%)
+                const MAX_SMALL = 600;
+                let ws = imgEl.width, hs = imgEl.height;
+                if (ws > hs && ws > MAX_SMALL) { hs = Math.round(hs * MAX_SMALL / ws); ws = MAX_SMALL; }
+                else if (hs >= ws && hs > MAX_SMALL) { ws = Math.round(ws * MAX_SMALL / hs); hs = MAX_SMALL; }
+                const cSmall = document.createElement('canvas');
+                cSmall.width = ws; cSmall.height = hs;
+                cSmall.getContext('2d').drawImage(imgEl, 0, 0, ws, hs);
+                fotosArrSmall.push(cSmall.toDataURL('image/jpeg', 0.55));
+
+                processados++;
+                if (processados === paraProcessar.length) renderFotosGrid();
+            };
+            imgEl.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function renderFotosGrid() {
+    const wrap = document.getElementById('fotosGridWrap');
+    if (!fotosArr.length) { wrap.innerHTML = ''; return; }
+    const n = fotosArr.length;
+    const cls = ['','g1','g2','g3','g4'][n];
+    const slots = fotosArr.map((f,i) =>
+        '<div class="foto-slot">' +
+        '<img src="' + f + '">' +
+        '<button class="foto-remover" onclick="removerFoto(' + i + ')">✕</button>' +
+        '<button class="foto-rabiscar" onclick="abrirEditorIdx(' + i + ')">✏</button>' +
+        '</div>'
+    ).join('');
+    wrap.innerHTML = '<div class="fotos-grid ' + cls + '">' + slots + '</div>';
+}
+
+function removerFoto(idx) { fotosArr.splice(idx, 1); fotosArrSmall.splice(idx, 1); renderFotosGrid(); }
+
+const canvas = document.getElementById('editorCanvas');
+const ctx = canvas.getContext('2d');
+let desenhando = false, corAtual = '#ff3b3b', espAtual = 6, historico = [];
+const imgEditor = new Image();
+let editorIdx = 0;
+
+function abrirEditorIdx(idx) {
+    editorIdx = idx;
+    document.getElementById('editorOverlay').classList.add('ativo');
+    imgEditor.onload = function() {
+        const maxW = window.innerWidth, maxH = window.innerHeight - 130;
+        const ratio = Math.min(maxW / imgEditor.width, maxH / imgEditor.height);
+        canvas.width = imgEditor.width * ratio; canvas.height = imgEditor.height * ratio;
+        ctx.drawImage(imgEditor, 0, 0, canvas.width, canvas.height);
+        historico = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+    };
+    imgEditor.src = fotosArr[idx];
+}
+function abrirEditor() { if (fotosArr.length) abrirEditorIdx(0); }
+function cancelarEditor() { document.getElementById('editorOverlay').classList.remove('ativo'); }
+function confirmarEditor() {
+    fotosArr[editorIdx] = canvas.toDataURL('image/jpeg', 0.55);
+    renderFotosGrid();
+    document.getElementById('editorOverlay').classList.remove('ativo');
+}
+function desfazer() {
+    if (historico.length <= 1) return;
+    historico.pop(); ctx.putImageData(historico[historico.length - 1], 0, 0);
+}
+function selecionarCor(el) { document.querySelectorAll('.cor-btn').forEach(b => b.classList.remove('ativo')); el.classList.add('ativo'); corAtual = el.dataset.cor; }
+function selecionarEsp(el) { document.querySelectorAll('.esp-btn').forEach(b => b.classList.remove('ativo')); el.classList.add('ativo'); espAtual = parseInt(el.dataset.esp); }
+function getPosCanvas(e) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
+}
+function iniciarDesenho(e) { desenhando = true; ctx.beginPath(); const p = getPosCanvas(e); ctx.moveTo(p.x, p.y); }
+function continuarDesenho(e) {
+    if (!desenhando) return;
+    const p = getPosCanvas(e);
+    ctx.lineTo(p.x, p.y); ctx.strokeStyle = corAtual; ctx.lineWidth = espAtual;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+}
+function encerrarDesenho() { desenhando = false; historico.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); }
+canvas.addEventListener('mousedown', iniciarDesenho);
+canvas.addEventListener('mousemove', continuarDesenho);
+canvas.addEventListener('mouseup', encerrarDesenho);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); iniciarDesenho(e); }, { passive: false });
+canvas.addEventListener('touchmove', e => { e.preventDefault(); continuarDesenho(e); }, { passive: false });
+canvas.addEventListener('touchend', encerrarDesenho);
+
+async function enviar() {
+    const btn = document.getElementById('btnAcao');
+    const status = document.getElementById('status');
+    const cliente = document.getElementById('cliente').value.trim();
+    const aparelho = document.getElementById('aparelho').value.trim();
+    const defeito = document.getElementById('defeito').value.trim();
+    const obs = document.getElementById('obs').value.trim();
+    const dataVal = document.getElementById('dataInput').value;
+    const editId = document.getElementById('editId').value;
+
+    if (!cliente || !aparelho) { alert("Preencha ao menos Cliente e Brinquedo!"); return; }
+
+    btn.disabled = true;
+    const id = editId || Date.now().toString();
+    const dataFormatada = dataVal ? new Date(dataVal + 'T12:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+
+    let numOS;
+    if (editId) {
+        const existente = carregarLocal().find(x => x.id === editId);
+        numOS = existente?.num || id.slice(-3);
+    } else {
+        const todos = carregarLocal();
+        const maxNum = todos.reduce((max, x) => Math.max(max, parseInt(x.num) || 0), 0);
+        numOS = maxNum + 1;
+    }
+
+    // Preserva checkup salvo da OS
+    const checkupSalvo = editId ? carregarCheckupOS(editId) : {};
+
+    const novaOrdem = {
+        id, num: numOS, data: dataFormatada, cliente, aparelho, defeito, obs,
+        foto: fotosArr[0] || '', foto2: fotosArr[1] || '', foto3: fotosArr[2] || '', foto4: fotosArr[3] || '',
+        tipo: tipoSelecionado, concluido: isConcluido ? 'true' : 'false', pendente: true,
+        checkup: checkupSalvo
+    };
+
+    const dados = carregarLocal();
+    if (editId) {
+        const idx = dados.findIndex(x => x.id === editId);
+        if (idx !== -1) dados[idx] = { ...dados[idx], ...novaOrdem };
+    } else {
+        dados.push(novaOrdem);
+    }
+    salvarLocal(dados);
+
+    if (!isOnline()) {
+        adicionarFila({ acao: editId ? 'editar' : 'salvar', ...novaOrdem });
+        status.innerHTML = '<div class="status-msg status-offline">📦 Salvo offline — sincroniza quando tiver internet</div>';
+        btn.disabled = false;
+        setTimeout(() => { listar(); fecharForm(); }, 1000);
+        return;
+    }
+
+    try {
+        status.innerHTML = '<div class="status-msg status-loading">⏳ Salvando...</div>';
+        const payload = {
+            acao: editId ? 'editar' : 'salvar', id, cliente, aparelho, defeito, obs,
+            foto: fotosArrSmall[0] || fotosArr[0] || '', foto2: fotosArrSmall[1] || fotosArr[1] || '', foto3: fotosArrSmall[2] || fotosArr[2] || '', foto4: fotosArrSmall[3] || fotosArr[3] || '',
+            tipo: tipoSelecionado, concluido: isConcluido ? 'true' : 'false', data: dataFormatada, num: numOS
+        };
+        const res = await fetch(URL_API, { method: 'POST', body: JSON.stringify(payload) });
+        const d = await res.json();
+        if (d.ok) {
+            const dados2 = carregarLocal();
+            const idx = dados2.findIndex(x => x.id === id);
+            if (idx !== -1) { dados2[idx].pendente = false; salvarLocal(dados2); }
+            status.innerHTML = '<div class="status-msg status-ok">✓ Salvo com sucesso!</div>';
+            setTimeout(() => { listar(); fecharForm(); btn.disabled = false; }, 900);
+        } else throw new Error(d.error);
+    } catch (e) {
+        adicionarFila({ acao: editId ? 'editar' : 'salvar', ...novaOrdem });
+        status.innerHTML = '<div class="status-msg status-offline">📦 Salvo offline — sincroniza depois</div>';
+        btn.disabled = false;
+        setTimeout(() => { listar(); fecharForm(); }, 900);
+    }
+}
+
+function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function setHtml(id, val) { const el = document.getElementById(id); if (el) el.innerHTML = val; }
+
+function limparForm() {
+    setVal('editId', ''); setVal('cliente', ''); setVal('aparelho', '');
+    setVal('defeito', ''); setVal('obs', ''); setVal('dataInput', '');
+    setVal('fotoInputCamera', ''); setVal('fotoInputGaleria', '');
+    imagemBase64 = ''; fotosArr = []; fotosArrSmall = []; isConcluido = false; tipoSelecionado = 'interno';
+    setHtml('fotosGridWrap', '');
+    setTxt('btnAcao', 'SALVAR ORDEM');
+    const btn = document.getElementById('btnAcao');
+    if (btn) { btn.style.background = ''; btn.style.color = ''; btn.disabled = false; btn.style.opacity = ''; }
+    setTxt('formTitleIcon', '▮'); setTxt('formTitleText', 'Nova Ordem');
+    setHtml('status', '');
+    const toggle = document.getElementById('statusToggle');
+    if (toggle) toggle.classList.remove('concluido');
+    setTxt('toggleLabel', 'PENDENTE — toque para marcar como concluído');
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('ativo', b.dataset.tipo === tipoSelecionado));
+    document.querySelectorAll('.item-check').forEach(c => c.checked = false);
+    const modPot = document.getElementById('modPotencia'); if (modPot) modPot.value = '';
+}
+
+let filtroTagsAtivos = new Set();
+
+function toggleFiltroTag(el) {
+    const f = el.dataset.f;
+    if (filtroTagsAtivos.has(f)) { filtroTagsAtivos.delete(f); el.classList.remove('ativo'); }
+    else { filtroTagsAtivos.add(f); el.classList.add('ativo'); }
+    aplicarFiltros();
+}
+
+function limparFiltros() {
+    document.getElementById('filtroCliente').value = '';
+    document.getElementById('filtroBrinquedo').value = '';
+    document.getElementById('filtroId').value = '';
+    document.getElementById('filtroData').value = '';
+    filtroTagsAtivos.clear();
+    document.querySelectorAll('.filtro-tag').forEach(t => t.classList.remove('ativo'));
+    renderizarLista(todosOsDados);
+}
+
+function aplicarFiltros() {
+    const fCliente = document.getElementById('filtroCliente').value.toLowerCase();
+    const fBrinquedo = document.getElementById('filtroBrinquedo').value.toLowerCase();
+    const fId = document.getElementById('filtroId').value.toLowerCase();
+    const fData = document.getElementById('filtroData').value;
+
+    let filtrados = todosOsDados.filter(item => {
+        if (fCliente && !item.cliente?.toLowerCase().includes(fCliente)) return false;
+        if (fBrinquedo && !item.aparelho?.toLowerCase().includes(fBrinquedo)) return false;
+        if (fId && !item.id?.toLowerCase().includes(fId)) return false;
+        if (fData) {
+            const dataFiltro = new Date(fData + 'T12:00:00').toLocaleDateString('pt-BR');
+            if ((item.data || '') !== dataFiltro) return false;
+        }
+        if (filtroTagsAtivos.size > 0) {
+            const tipos = ['garantia', 'interno', 'orcamento'];
+            const statusL = ['concluido', 'pendente'];
+            const tipoAtivos = [...filtroTagsAtivos].filter(f => tipos.includes(f));
+            const statusAtivos = [...filtroTagsAtivos].filter(f => statusL.includes(f));
+            if (tipoAtivos.length && !tipoAtivos.includes(item.tipo)) return false;
+            if (statusAtivos.length) {
+                const isCon = item.concluido === 'true';
+                if (statusAtivos.includes('concluido') && !statusAtivos.includes('pendente') && !isCon) return false;
+                if (statusAtivos.includes('pendente') && !statusAtivos.includes('concluido') && isCon) return false;
+            }
+        }
+        return true;
+    });
+    renderizarLista(filtrados);
+}
+
+async function listar() {
+    const listaDiv = document.getElementById('lista');
+    listaDiv.innerHTML = `<div class="skeleton"></div><div class="skeleton" style="height:70px;opacity:.6"></div><div class="skeleton" style="height:70px;opacity:.3"></div>`;
+
+    let dados = carregarLocal();
+    if (isOnline()) {
+        try {
+            const res = await fetch(URL_API + "?t=" + Date.now());
+            const servidor = await res.json();
+            if (Array.isArray(servidor)) {
+                const pendentes = dados.filter(d => d.pendente);
+                const idsServidor = servidor.map(x => x.id);
+                dados = [...servidor, ...pendentes.filter(p => !idsServidor.includes(p.id))];
+                salvarLocal(dados);
+            }
+        } catch {}
+    }
+    todosOsDados = [...dados].reverse();
+    aplicarFiltros();
+}
+
+function renderizarLista(lista) {
+    const listaDiv = document.getElementById('lista');
+    document.getElementById('countBadge').textContent = lista.length;
+    listaDiv.innerHTML = '';
+
+    if (!lista.length) {
+        listaDiv.innerHTML = `<div class="empty-state"><span class="icon">📋</span>Nenhuma ordem encontrada.</div>`;
+        return;
+    }
+
+    lista.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'card' + (item.concluido === 'true' ? ' concluido' : '') + (item.pendente ? ' pendente-sync' : '');
+        div.style.animationDelay = (i * 0.04) + 's';
+
+        const tipoBadge = item.tipo ? `<span class="badge badge-${item.tipo}">${item.tipo === 'garantia' ? '🛡 GARANTIA' : item.tipo === 'interno' ? '🔧 INTERNO' : '💰 ORÇAMENTO'}</span>` : '';
+        const statusBadge = item.concluido === 'true' ? `<span class="badge badge-concluido">✓ CONCLUÍDO</span>` : `<span class="badge badge-aberto">⏳ ABERTO</span>`;
+        const syncBadge = item.pendente ? `<span class="badge badge-sync">⚡ SYNC</span>` : '';
+
+        // Badge progresso checklist (só quando pendente)
+        let checklistBadge = '';
+        if (item.concluido !== 'true') {
+            const saved = item.checkup || carregarCheckupOS(item.id);
+            const savedKeys = Object.keys(saved).filter(k => saved[k] === true);
+            const ap = (item.aparelho || '').toLowerCase();
+            const tipo = ap.includes('triciclo') ? 'triciclo' : 'hoverboard';
+            const totalItens = CHECKUPS[tipo].reduce((s, g) => s + g.itens.length, 0);
+            if (savedKeys.length > 0) {
+                const cor = savedKeys.length === totalItens ? '#00c97a' : '#4db8ff';
+                checklistBadge = `<span class="badge" style="border-color:${cor};color:${cor};background:${cor}22">📋 ${savedKeys.length}/${totalItens}</span>`;
+            }
+        }
+
+        div.innerHTML = `
+            <div class="card-top">
+                <div class="card-id">OS #${String(item.num || '—').padStart(3,'0')}</div>
+                <div class="card-badges">${syncBadge}${tipoBadge}${statusBadge}${checklistBadge}<span class="badge badge-data">${item.data || ''}</span></div>
+            </div>
+            <div class="card-cliente">${item.cliente || '—'}</div>
+            <div class="card-row"><span class="card-key">BRINQUEDO</span><span class="card-val">${item.aparelho || '—'}</span></div>
+            <div class="card-row"><span class="card-key">DEFEITO</span><span class="card-val">${item.defeito || '—'}</span></div>
+            ${item.obs ? `<div class="card-obs">${item.obs}</div>` : ''}
+            ${(() => {
+                const fs = [item.foto,item.foto2,item.foto3,item.foto4].filter(Boolean);
+                if (!fs.length) return '';
+                const n = fs.length;
+                const cls = ['','g1','g2','g3','g4'][n];
+                return '<div class="galeria '+cls+'">' + fs.map((f,i) =>
+                    '<div class="galeria-item" onclick="abrirLightboxFotos(\'' + item.id + '\',' + i + ')"><img src="' + f + '" loading="lazy"></div>'
+                ).join('') + '</div>';
+            })()}
+            <div class="card-actions">
+                <button class="btn btn-concluir" onclick="` + (item.concluido === 'true' ? "toggleConcluidoCard('" + item.id + "')" : "abrirCheckup('" + item.id + "')") + `">${item.concluido === 'true' ? '↩ REABRIR' : '✓ CONCLUIR'}</button>
+                <button class="btn btn-edit" onclick='prepararEdicao(${JSON.stringify(item).replace(/'/g, "&#39;")})'>✏</button>
+                <button class="btn btn-delete" onclick="deletar('${item.id}')">✕</button>
+                <button class="btn btn-whatsapp" onclick="compartilharWhatsApp('${item.id}')">🖼 CARD</button>
+            </div>
+        `;
+        listaDiv.appendChild(div);
+    });
+}
+
+let lightboxFotos = [], lightboxIdx = 0;
+
+function abrirLightboxFotos(id, idx) {
+    const item = todosOsDados.find(x => x.id === id);
+    if (!item) return;
+    lightboxFotos = [item.foto,item.foto2,item.foto3,item.foto4].filter(Boolean);
+    lightboxIdx = idx || 0;
+    mostrarLightbox();
+}
+function mostrarLightbox() {
+    document.getElementById('lightboxImg').src = lightboxFotos[lightboxIdx];
+    document.getElementById('lightboxCounter').textContent = lightboxFotos.length > 1 ? (lightboxIdx+1) + ' / ' + lightboxFotos.length : '';
+    document.getElementById('lightboxPrev').style.display = lightboxIdx > 0 ? 'flex' : 'none';
+    document.getElementById('lightboxNext').style.display = lightboxIdx < lightboxFotos.length-1 ? 'flex' : 'none';
+    document.getElementById('lightbox').classList.add('ativo');
+}
+function fecharLightbox() { document.getElementById('lightbox').classList.remove('ativo'); }
+function lightboxNav(dir) { lightboxIdx += dir; mostrarLightbox(); }
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') fecharLightbox();
+    if (e.key === 'ArrowRight' && lightboxIdx < lightboxFotos.length-1) lightboxNav(1);
+    if (e.key === 'ArrowLeft' && lightboxIdx > 0) lightboxNav(-1);
+});
+
+async function toggleConcluidoCard(id) {
+    const dados = carregarLocal();
+    const idx = dados.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    dados[idx].concluido = dados[idx].concluido === 'true' ? 'false' : 'true';
+    salvarLocal(dados);
+    todosOsDados = todosOsDados.map(x => x.id === id ? {...x, concluido: dados[idx].concluido} : x);
+    aplicarFiltros();
+    if (isOnline()) {
+        try {
+            const item = dados[idx];
+            await fetch(URL_API, { method: 'POST', body: JSON.stringify({
+                acao: 'editar', id: item.id, cliente: item.cliente, aparelho: item.aparelho,
+                defeito: item.defeito || '', obs: item.obs || '', foto: item.foto || '',
+                tipo: item.tipo || '', concluido: item.concluido, data: item.data || '', num: item.num || ''
+            })});
+        } catch {}
+    } else { adicionarFila({ acao: 'editar', ...dados[idx] }); }
+}
+
+function prepararEdicao(item) {
+    document.getElementById('editId').value = item.id;
+    document.getElementById('cliente').value = item.cliente || '';
+    document.getElementById('aparelho').value = item.aparelho || '';
+    document.getElementById('defeito').value = item.defeito || '';
+    document.getElementById('obs').value = item.obs || '';
+    imagemBase64 = item.foto || '';
+    fotosArr = [item.foto, item.foto2, item.foto3, item.foto4].filter(Boolean);
+    fotosArrSmall = [...fotosArr];
+    renderFotosGrid();
+    // Restaura checkup salvo (do objeto local ou do storage)
+    if (item.checkup && Object.keys(item.checkup).length > 0) {
+        salvarCheckupOS(item.id, item.checkup);
+    }
+    tipoSelecionado = item.tipo || 'interno';
+    isConcluido = item.concluido === 'true';
+    if (item.data) {
+        const partes = item.data.split('/');
+        if (partes.length === 3) document.getElementById('dataInput').value = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('ativo', b.dataset.tipo === tipoSelecionado));
+    document.getElementById('statusToggle').classList.toggle('concluido', isConcluido);
+    document.getElementById('toggleLabel').textContent = isConcluido ? 'CONCLUÍDO ✓' : 'PENDENTE — toque para marcar como concluído';
+    document.getElementById('btnAcao').textContent = 'CONFIRMAR ALTERAÇÃO';
+    document.getElementById('btnAcao').style.background = '#ffc107';
+    document.getElementById('btnAcao').style.color = '#000';
+    document.getElementById('btnAcao').disabled = false;
+    document.getElementById('formTitleIcon').textContent = '✏';
+    document.getElementById('formTitleText').textContent = 'Editando Ordem';
+    abrirForm();
+}
+
+async function deletar(id) {
+    if (!confirm("Deseja apagar esta ordem?")) return;
+    const dados = carregarLocal().filter(x => x.id !== id);
+    salvarLocal(dados);
+    todosOsDados = todosOsDados.filter(x => x.id !== id);
+    aplicarFiltros();
+    if (isOnline()) {
+        try { await fetch(URL_API, { method: 'POST', body: JSON.stringify({ acao: 'deletar', id }) }); } catch {}
+    } else { adicionarFila({ acao: 'deletar', id }); }
+}
+
+// CHECKUP (botão CONCLUIR nos cards)
+const CHECKUPS = {
+    hoverboard: [
+        { grupo: 'EQUILÍBRIO E MOVIMENTO', itens: ['Equilíbrio estável', 'Aceleração normal', 'Sem barulhos estranhos'] },
+        { grupo: 'ILUMINAÇÃO', itens: ['Luz frontal OK', 'Luz da roda OK', 'Luz lateral OK', 'Luz de cima OK'] },
+        { grupo: 'BATERIA', itens: ['Liga normalmente', 'Carrega corretamente', 'Segura a carga'] },
+        { grupo: 'CONECTIVIDADE E SOM', itens: ['Bluetooth funcionando', 'Som OK', 'Buzina OK'] },
+        { grupo: 'CONECTORES', itens: ['Conectores 100% OK'] }
+    ],
+    triciclo: [
+        { grupo: 'MOVIMENTO', itens: ['Aceleração normal', 'Sem barulhos estranhos', 'Freio funcionando'] },
+        { grupo: 'ILUMINAÇÃO', itens: ['Luzes OK'] },
+        { grupo: 'BATERIA', itens: ['Bateria OK'] },
+        { grupo: 'CONECTIVIDADE E SOM', itens: ['Bluetooth funcionando', 'Som OK', 'Buzina OK'] },
+        { grupo: 'CONECTORES', itens: ['Conectores OK'] }
+    ]
+};
+let checkupIdPendente = null, checkupTipoAtual = 'hoverboard', checkupMarcados = {};
+const CHECKUP_KEY = 'bancada_checkup';
+
+function carregarCheckupOS(id) {
+    try { return JSON.parse(localStorage.getItem(CHECKUP_KEY) || '{}')[id] || {}; } catch { return {}; }
+}
+function salvarCheckupOS(id, marcados) {
+    try {
+        const todos = JSON.parse(localStorage.getItem(CHECKUP_KEY) || '{}');
+        todos[id] = marcados;
+        localStorage.setItem(CHECKUP_KEY, JSON.stringify(todos));
+    } catch {}
+}
+function limparCheckupOS(id) {
+    try {
+        const todos = JSON.parse(localStorage.getItem(CHECKUP_KEY) || '{}');
+        delete todos[id];
+        localStorage.setItem(CHECKUP_KEY, JSON.stringify(todos));
+    } catch {}
+}
+
+function abrirCheckup(id) {
+    checkupIdPendente = id;
+    const item = todosOsDados.find(x => x.id === id);
+    const ap = (item?.aparelho || '').toLowerCase();
+    checkupTipoAtual = ap.includes('triciclo') ? 'triciclo' : 'hoverboard';
+    // Carrega do objeto local primeiro, depois do storage
+    const fromObj = item?.checkup || {};
+    const fromStorage = carregarCheckupOS(id);
+    checkupMarcados = Object.keys(fromObj).length > 0 ? fromObj : fromStorage;
+    renderCheckupTipo();
+    document.getElementById('modalCheckup').classList.add('ativo');
+}
+function selecionarCheckupTipo(el) {
+    document.querySelectorAll('.modal-tipo-btn').forEach(b => b.classList.remove('ativo'));
+    el.classList.add('ativo');
+    checkupTipoAtual = el.dataset.aparelho;
+    renderCheckupTipo();
+}
+function renderCheckupTipo() {
+    document.querySelectorAll('.modal-tipo-btn').forEach(b => b.classList.toggle('ativo', b.dataset.aparelho === checkupTipoAtual));
+    const grupos = CHECKUPS[checkupTipoAtual] || [];
+    const wrap = document.getElementById('checklistWrap');
+    let total = 0, marcadosIniciais = 0, html = '';
+    grupos.forEach(grupo => {
+        html += '<span class="checklist-label">' + grupo.grupo + '</span>';
+        grupo.itens.forEach(item => {
+            const key = checkupTipoAtual + '_' + item;
+            const isMarcado = checkupMarcados[key] === true;
+            total++;
+            if (isMarcado) marcadosIniciais++;
+            html += '<div class="check-item' + (isMarcado ? ' checked' : '') + '" onclick="toggleCheckItem(this, \'' + key + '\')">' +
+                '<div class="check-circle">' + (isMarcado ? '✓' : '') + '</div>' +
+                '<span class="check-text">' + item + '</span></div>';
+        });
+    });
+    wrap.innerHTML = html;
+    document.getElementById('checkupProgress').textContent = marcadosIniciais + ' / ' + total + ' itens verificados';
+    const btn = document.getElementById('btnConfirmarCheckup');
+    const tudo = marcadosIniciais === total;
+    if (btn) { btn.disabled = !tudo; btn.style.opacity = tudo ? '1' : '0.4'; btn.style.cursor = tudo ? 'pointer' : 'not-allowed'; }
+}
+function toggleCheckItem(el, key) {
+    el.classList.toggle('checked');
+    const checked = el.classList.contains('checked');
+    el.querySelector('.check-circle').textContent = checked ? '✓' : '';
+
+    // Salva no storage e no objeto local
+    checkupMarcados[key] = checked;
+    if (checkupIdPendente) {
+        salvarCheckupOS(checkupIdPendente, checkupMarcados);
+        // Atualiza também no array de dados local
+        const idx = todosOsDados.findIndex(x => x.id === checkupIdPendente);
+        if (idx !== -1) {
+            todosOsDados[idx].checkup = { ...checkupMarcados };
+            // Atualiza no localStorage também
+            const dados = carregarLocal();
+            const didx = dados.findIndex(x => x.id === checkupIdPendente);
+            if (didx !== -1) { dados[didx].checkup = { ...checkupMarcados }; salvarLocal(dados); }
+        }
+    }
+
+    const total = document.querySelectorAll('.check-item').length;
+    const marcados = document.querySelectorAll('.check-item.checked').length;
+    document.getElementById('checkupProgress').textContent = marcados + ' / ' + total + ' itens verificados';
+    const btn = document.getElementById('btnConfirmarCheckup');
+    if (marcados === total) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+    else { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; }
+}
+function fecharCheckup() { document.getElementById('modalCheckup').classList.remove('ativo'); checkupIdPendente = null; }
+function confirmarCheckup() {
+    const id = checkupIdPendente;
+    fecharCheckup();
+    if (id) {
+        limparCheckupOS(id); // limpa checkup salvo pois foi concluído
+        toggleConcluidoCard(id);
+    }
+}
+
+// CHECKLIST DO FORMULÁRIO (seu código, intacto)
+function validarChecklist() {
+    const todosItens = document.querySelectorAll('.item-check');
+    const marcados = document.querySelectorAll('.item-check:checked');
+    const btnAcao1 = document.getElementById("btnAcao");
+    const statusEl = document.getElementById("status");
+
+    // Coleta itens NÃO marcados (com defeito)
+    const naoMarcados = [];
+    todosItens.forEach(item => {
+        if (!item.checked) {
+            const label = item.parentElement;
+            const texto = label ? label.textContent.trim() : item.id;
+            naoMarcados.push(texto);
+        }
+    });
+
+    // Pega potência do módulo se preenchida
+    const modPot = document.getElementById('modPotencia');
+    const potencia = modPot && modPot.value.trim() ? ' (' + modPot.value.trim() + ')' : '';
+    // Se módulo marcado, adiciona à lista de ok (não ao defeito)
+
+    // Atualiza campo defeito com itens com problema
+    if (naoMarcados.length > 0) {
+        const defeitoField = document.getElementById('defeito');
+        const defeitoAtual = defeitoField.value.trim();
+        // Remove adição anterior (depois do " - ")
+        const defeitoBase = defeitoAtual.includes(' - ') ? defeitoAtual.split(' - ')[0].trim() : defeitoAtual;
+        defeitoField.value = defeitoBase + (defeitoBase ? ' - ' : '') + naoMarcados.join(', ');
+    }
+
+    document.getElementById('modalInspecao').close();
+
+    if (marcados.length === todosItens.length) {
+        // Tudo OK
+        btnAcao1.disabled = false;
+        btnAcao1.style.opacity = '';
+        statusEl.innerHTML = "<div class='status-msg status-ok'>✔ Inspeção completa — pode salvar!</div>";
+    } else {
+        // Pendências encontradas - libera salvar mas avisa
+        btnAcao1.disabled = false;
+        btnAcao1.style.opacity = '';
+        statusEl.innerHTML = "<div class='status-msg status-offline'>⚠️ " + naoMarcados.length + " item(s) com problema adicionado(s) ao defeito</div>";
+    }
+
+    atualizarEstadoBotaoSalvar();
+}
+
+let shareBlob = null;
+let shareDataUrl = null;
+let shareItemId = null;
+
+async function compartilharWhatsApp(id) {
+    shareItemId = id;
+    const item = todosOsDados.find(x => x.id === id);
+    if (!item) return;
+
+    const overlay = document.getElementById('shareOverlay');
+    const loading = document.getElementById('shareLoading');
+    const imgEl = document.getElementById('shareImg');
+    const actions = document.getElementById('shareActions');
+    const hint = document.getElementById('shareHint');
+
+    overlay.classList.add('ativo');
+    loading.style.display = 'block';
+    imgEl.style.display = 'none';
+    actions.style.display = 'none';
+    hint.textContent = '';
+
+    try {
+        shareDataUrl = await gerarImagemCard(item);
+        imgEl.src = shareDataUrl;
+        const res = await fetch(shareDataUrl);
+        shareBlob = await res.blob();
+        loading.style.display = 'none';
+        imgEl.style.display = 'block';
+        actions.style.display = 'flex';
+        hint.textContent = navigator.canShare ? '💡 Toque em WHATSAPP para compartilhar!' : '💡 Baixe e envie no WhatsApp';
+    } catch(e) {
+        loading.textContent = '✗ Erro: ' + e.message;
+    }
+}
+
+async function gerarImagemCard(item) {
+    const SCALE = 2; // resolução 2x para nitidez
+    const W = 900;
+    const PAD = 48;
+    const fotos = [item.foto, item.foto2, item.foto3, item.foto4].filter(Boolean);
+
+    // Carrega fotos primeiro
+    const imgObjs = [];
+    for (const src of fotos) {
+        try { imgObjs.push(await loadImg(src)); } catch { imgObjs.push(null); }
+    }
+
+    // Calcula altura das fotos (estimativa para pré-alocação)
+    const FOTO_H = imgObjs.length > 0 ? (imgObjs.length === 1 && imgObjs[0] ?
+        Math.round((W - PAD*2) * (imgObjs[0].height / imgObjs[0].width)) + 26 :
+        420) : 0;
+
+    // Calcula altura do texto dinamicamente
+    const tmpC = document.createElement('canvas').getContext('2d');
+    let textH = 300;
+    if (item.aparelho) textH += wrapText(tmpC, item.aparelho, W-PAD*2, 16).length * 22;
+    if (item.defeito)  textH += wrapText(tmpC, item.defeito,  W-PAD*2, 16).length * 22 + 10;
+    if (item.obs)      textH += wrapText(tmpC, item.obs,      W-PAD*2, 14).length * 20 + 20;
+
+    const H = textH + FOTO_H + 60;
+
+    const cv = document.createElement('canvas');
+    cv.width = W * SCALE;
+    cv.height = H * SCALE;
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+    const c = cv.getContext('2d');
+    c.scale(SCALE, SCALE); // tudo desenhado em coordenadas normais, renderizado em 2x
+
+    // ── FUNDO ──
+    const bgGrad = c.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#141414');
+    bgGrad.addColorStop(1, '#0d0d0d');
+    c.fillStyle = bgGrad;
+    c.fillRect(0, 0, W, H);
+
+    // Borda
+    c.strokeStyle = '#ff6b00';
+    c.lineWidth = 3;
+    rrect(c, 3, 3, W-6, H-6, 20);
+    c.stroke();
+
+    // Faixa topo gradiente
+    const topGrad = c.createLinearGradient(0,0,W,0);
+    topGrad.addColorStop(0,'#ff6b00');
+    topGrad.addColorStop(1,'#ffaa00');
+    c.fillStyle = topGrad;
+    rrectTop(c, 3, 3, W-6, 8, 20);
+    c.fill();
+
+    // ── HEADER ──
+    c.fillStyle = '#ff6b00';
+    c.font = 'bold 24px monospace';
+    c.fillText('BANCADA PRO', PAD, 52);
+
+    c.fillStyle = '#3a3a3a';
+    c.font = '14px monospace';
+    c.fillText('ORDEM DE SERVICO', PAD + 230, 52);
+
+    c.fillStyle = '#222';
+    c.fillRect(PAD, 64, W-PAD*2, 1);
+
+    // OS num e data
+    const num = String(item.num || '0').padStart(3,'0');
+    c.fillStyle = '#555';
+    c.font = 'bold 14px monospace';
+    c.fillText('OS #' + num, PAD, 90);
+    c.textAlign = 'right';
+    c.fillText(item.data || '', W-PAD, 90);
+    c.textAlign = 'left';
+
+    // ── BADGES ──
+    let bx = PAD;
+    const tipoMap = {
+        garantia:  ['#00c97a', 'GARANTIA'],
+        interno:   ['#4db8ff', 'INTERNO'],
+        orcamento: ['#b06bff', 'ORCAMENTO']
+    };
+    if (item.tipo && tipoMap[item.tipo]) {
+        const [cor, txt] = tipoMap[item.tipo];
+        bx = badge(c, txt, cor, bx, 118) + 10;
+    }
+    const sCor = item.concluido === 'true' ? '#00c97a' : '#ffc107';
+    badge(c, item.concluido === 'true' ? 'CONCLUIDO' : 'ABERTO', sCor, bx, 118);
+
+    // ── CLIENTE ──
+    c.fillStyle = '#ffffff';
+    c.font = 'bold 36px sans-serif';
+    c.fillText(clip(item.cliente || '—', 28), PAD, 174);
+
+    c.fillStyle = '#222';
+    c.fillRect(PAD, 186, W-PAD*2, 1);
+
+    // ── CAMPOS ──
+    let y = 214;
+
+    function drawCampo(labelTxt, valor, labelCor) {
+        if (!valor) return;
+        c.fillStyle = labelCor || '#ff6b00';
+        c.font = 'bold 12px monospace';
+        c.fillText(labelTxt, PAD, y);
+        y += 6;
+        c.fillStyle = '#e0e0e0';
+        c.font = '17px sans-serif';
+        const linhas = wrapText(c, valor, W-PAD*2, 17);
+        for (const l of linhas) { y += 22; c.fillText(l, PAD, y); }
+        y += 24;
+    }
+
+    drawCampo('BRINQUEDO', item.aparelho, '#ff6b00');
+    drawCampo('DEFEITO',   item.defeito,  '#ff6b00');
+
+    // OBS com fundo destacado
+    if (item.obs) {
+        const obsLinhas = wrapText(c, item.obs, W-PAD*2-20, 14);
+        const obsH = obsLinhas.length * 20 + 20;
+        c.fillStyle = '#1a1a1a';
+        rrect(c, PAD, y-4, W-PAD*2, obsH, 8);
+        c.fill();
+        c.strokeStyle = '#ff6b00';
+        c.lineWidth = 2;
+        c.beginPath(); c.moveTo(PAD, y-4); c.lineTo(PAD, y-4+obsH); c.stroke();
+        c.fillStyle = '#888';
+        c.font = 'bold 11px monospace';
+        c.fillText('OBS', PAD+12, y+10);
+        c.fillStyle = '#bbb';
+        c.font = '15px sans-serif';
+        obsLinhas.forEach(l => { y += 20; c.fillText(l, PAD+12, y+4); });
+        y += 28;
+    }
+
+    // ── FOTOS ──
+    if (imgObjs.length > 0) {
+        y += 10;
+        c.fillStyle = '#1e1e1e';
+        c.fillRect(PAD, y, W-PAD*2, 1);
+        y += 16;
+
+        if (imgObjs.length === 1 && imgObjs[0]) {
+            // 1 foto: mantém proporção original, largura total
+            const img = imgObjs[0];
+            const fw = W - PAD*2;
+            const fh = Math.round(fw * img.height / img.width);
+            c.save();
+            rrect(c, PAD, y, fw, fh, 10);
+            c.clip();
+            c.drawImage(img, PAD, y, fw, fh);
+            c.restore();
+            y += fh + 10;
+        } else {
+            // 2-4 fotos: grid com proporção original de cada uma
+            const fw = Math.floor((W-PAD*2 - (imgObjs.length-1)*8) / imgObjs.length);
+            let fx = PAD;
+            let maxH = 0;
+            // calcula altura máxima proporcional
+            for (const img of imgObjs) {
+                if (!img) continue;
+                const fh = Math.round(fw * img.height / img.width);
+                if (fh > maxH) maxH = fh;
+            }
+            maxH = Math.min(maxH, 400); // limita altura máxima
+            for (const img of imgObjs) {
+                if (!img) { fx += fw+8; continue; }
+                const fh = Math.round(fw * img.height / img.width);
+                const fy = y + Math.round((maxH - Math.min(fh, maxH)) / 2);
+                c.save();
+                rrect(c, fx, y, fw, maxH, 10);
+                c.clip();
+                if (fh <= maxH) {
+                    c.drawImage(img, fx, fy, fw, fh);
+                } else {
+                    // corta verticalmente centralizado
+                    const sc = fw / img.width;
+                    const dh = img.height * sc;
+                    c.drawImage(img, fx, y-(dh-maxH)/2, fw, dh);
+                }
+                c.restore();
+                fx += fw + 8;
+            }
+            y += maxH + 10;
+        }
+    }
+
+    // ── RODAPÉ ──
+    c.fillStyle = '#222';
+    c.fillRect(PAD, H-30, W-PAD*2, 1);
+    c.fillStyle = '#444';
+    c.font = '11px monospace';
+    c.textAlign = 'right';
+    c.fillText(new Date().toLocaleString('pt-BR'), W-PAD, H-12);
+    c.textAlign = 'left';
+
+    return cv.toDataURL('image/png', 1.0);
+}
+
+
+function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);
+    ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+}
+function rrectTop(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h);
+    ctx.lineTo(x,y+h);
+    ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+}
+function badge(ctx, txt, cor, x, y) {
+    ctx.font = 'bold 11px monospace';
+    const tw = ctx.measureText(txt).width + 20;
+    ctx.strokeStyle = cor; ctx.lineWidth = 1.5;
+    rrect(ctx, x, y-16, tw, 22, 11); ctx.stroke();
+    ctx.fillStyle = cor+'22'; rrect(ctx, x, y-16, tw, 22, 11); ctx.fill();
+    ctx.fillStyle = cor; ctx.fillText(txt, x+10, y);
+    return x + tw;
+}
+function wrapText(ctx, txt, maxW, fs) {
+    ctx.font = fs+'px sans-serif';
+    const words = txt.split(' '), lines = [];
+    let cur = '';
+    for (const w of words) {
+        const t = cur ? cur+' '+w : w;
+        if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; }
+        else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return lines.slice(0, 4);
+}
+function clip(txt, max) { return txt.length > max ? txt.slice(0,max)+'...' : txt; }
+function loadImg(src) {
+    return new Promise((res,rej) => {
+        const i = new Image(); i.onload = ()=>res(i); i.onerror = rej; i.src = src;
+    });
+}
+
+async function abrirWpp() {
+    if (shareBlob && navigator.canShare) {
+        const file = new File([shareBlob], 'os.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], title: 'OS - Bancada Pro' }); fecharShare(); return; } catch{}
+        }
+    }
+    const item = todosOsDados.find(x => x.id === shareItemId);
+    if (!item) return;
+    const num = String(item.num||'—').padStart(3,'0');
+    const tipo = item.tipo==='garantia'?'🛡 Garantia':item.tipo==='interno'?'🔧 Interno':'💰 Orçamento';
+    const st = item.concluido==='true'?'✅ CONCLUÍDO':'⏳ ABERTO';
+    const msg = ['🔧 *BANCADA PRO*','━━━━━━━━━━━━━',
+        `📋 *OS #${num}* — ${item.data||''}`,
+        `👤 *Cliente:* ${item.cliente||'—'}`,
+        `🎮 *Brinquedo:* ${item.aparelho||'—'}`,
+        `🔴 *Defeito:* ${item.defeito||'—'}`,
+        item.obs?`📝 ${item.obs}`:'',
+        `🏷 ${tipo} | 📌 ${st}`,'━━━━━━━━━━━━━'
+    ].filter(Boolean).join('%0A');
+    window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+function baixarImg() {
+    if (!shareDataUrl) return;
+    const a = document.createElement('a');
+    a.href = shareDataUrl; a.download = 'os_bancada.png'; a.click();
+}
+
+function fecharShare() {
+    document.getElementById('shareOverlay').classList.remove('ativo');
+    shareBlob = null; shareDataUrl = null; shareItemId = null;
+}
+
+atualizarBannerConexao();
+listar();
+sincronizarFila();
+
+// Sync automático a cada 30s se online
+setInterval(() => { if (isOnline()) listar(); }, 30000);
+
+// Sincroniza quando volta do background
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isOnline()) { sincronizarFila(); listar(); }
+});
+console.log(localStorage.getItem('bancada_checkup'))
+console.log(JSON.stringify(carregarLocal().map(x => ({id: x.id, checkup: x.checkup}))))
+</script>
+</body>
+</html>
